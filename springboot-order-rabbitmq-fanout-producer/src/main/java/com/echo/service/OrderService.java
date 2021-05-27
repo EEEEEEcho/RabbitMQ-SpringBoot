@@ -1,5 +1,8 @@
 package com.echo.service;
 
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -79,5 +82,31 @@ public class OrderService {
 
         //参数说明 param1:交换机名称,param2:路由key/queue队列名称,param3:消息内容
         rabbitTemplate.convertAndSend(exchangeName,routeKey1,orderId);
+    }
+
+    public void makeOrderTTLMessage(String userId,String productId,Integer num){
+        //1.根据商品ID查询库存是否充足
+        //2.保存订单
+        String orderId = UUID.randomUUID().toString().replace("-","");
+        System.out.println("订单：" + orderId + "生成成功TTLMessage.....");
+        //3.通过MQ来完成消息的分发
+        String exchangeName = "ttl-direct-exchange";  //交换机名称
+        String routeKey1 = "ttlMessage";
+        /**
+         * 队列与交换机的绑定等在消费方
+         */
+        //给消息设置过期时间
+        MessagePostProcessor messagePostProcessor = new MessagePostProcessor() {
+            @Override
+            public Message postProcessMessage(Message message) throws AmqpException {
+                //给消息设置过期时间5秒
+                message.getMessageProperties().setExpiration("5000");
+                message.getMessageProperties().setContentEncoding("UTF-8");
+                return message;
+            }
+        };
+
+        //参数说明 param1:交换机名称,param2:路由key/queue队列名称,param3:消息内容
+        rabbitTemplate.convertAndSend(exchangeName,routeKey1,orderId,messagePostProcessor);
     }
 }

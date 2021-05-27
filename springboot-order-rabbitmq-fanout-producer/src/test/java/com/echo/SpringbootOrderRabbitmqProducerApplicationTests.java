@@ -28,4 +28,9 @@ class SpringbootOrderRabbitmqProducerApplicationTests {
     void testTTL(){
         orderService.makeOrderTTL("4","4",15);
     }
+
+    @Test
+    void testTTLMessage(){
+        orderService.makeOrderTTLMessage("5","5",16);
+    }
 }
